@@ -193,7 +193,11 @@ function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
         <div className="space-y-3">
           <div><Label htmlFor="n">نام و نام خانوادگی</Label><Input id="n" value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label htmlFor="ph">شماره تماس (اختیاری)</Label><Input id="ph" dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
-          <div><Label htmlFor="pl">مبلغ تعهد (تومان)</Label><MoneyInput id="pl" value={pledged} onChange={setPledged} /></div>
+          <div>
+            <Label htmlFor="pl">مبلغ تعهد (تومان)</Label>
+            <MoneyInput id="pl" value={pledged} onChange={setPledged} />
+            {toNum(pledged) > 0 && <p className="mt-1 text-xs text-muted-foreground">عنوان: <b className="text-primary">{memberTitle(toNum(pledged))}</b></p>}
+          </div>
           <Button className="w-full" disabled={busy} onClick={save}>ثبت عضو</Button>
         </div>
       </DialogContent>
@@ -264,7 +268,11 @@ function MemberDialog({
         </div>
 
         <div className="flex items-end gap-2">
-          <div className="flex-1"><Label htmlFor="ep">ویرایش مبلغ تعهد</Label><MoneyInput id="ep" value={pledged} onChange={setPledged} /></div>
+          <div className="flex-1">
+            <Label htmlFor="ep">ویرایش مبلغ تعهد</Label>
+            <MoneyInput id="ep" value={pledged} onChange={setPledged} />
+            <p className="mt-1 text-xs text-muted-foreground">عنوان با این تعهد: <b className="text-primary">{memberTitle(toNum(pledged))}</b></p>
+          </div>
           <Button variant="outline" onClick={savePledge}>ذخیره</Button>
         </div>
 
