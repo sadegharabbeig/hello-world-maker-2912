@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatMoney } from "@/lib/accounting";
+import { formatMoney, memberTitle } from "@/lib/accounting";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -122,7 +122,10 @@ function Index() {
                   {formatMoney(r.code)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-bold">{r.name}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-bold">{r.name}</span>
+                    <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">{memberTitle(r.pledged)}</span>
+                  </div>
                   <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
                     <span>تعهد: {formatMoney(r.pledged)}</span>
                     <span className="text-success">واریز: {formatMoney(r.paid)}</span>
@@ -190,7 +193,11 @@ function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
         <div className="space-y-3">
           <div><Label htmlFor="n">نام و نام خانوادگی</Label><Input id="n" value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label htmlFor="ph">شماره تماس (اختیاری)</Label><Input id="ph" dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
-          <div><Label htmlFor="pl">مبلغ تعهد (تومان)</Label><MoneyInput id="pl" value={pledged} onChange={setPledged} /></div>
+          <div>
+            <Label htmlFor="pl">مبلغ تعهد (تومان)</Label>
+            <MoneyInput id="pl" value={pledged} onChange={setPledged} />
+            {toNum(pledged) > 0 && <p className="mt-1 text-xs text-muted-foreground">عنوان: <b className="text-primary">{memberTitle(toNum(pledged))}</b></p>}
+          </div>
           <Button className="w-full" disabled={busy} onClick={save}>ثبت عضو</Button>
         </div>
       </DialogContent>
@@ -246,6 +253,7 @@ function MemberDialog({
         <DialogHeader>
           <DialogTitle>{member.name} — کد {formatMoney(member.code)}</DialogTitle>
         </DialogHeader>
+        <p className="-mt-1 text-center text-xs text-muted-foreground">عنوان: <b className="text-primary">{memberTitle(member.pledged)}</b></p>
         <div className="grid grid-cols-3 gap-2 text-center text-sm">
           <div className="rounded-xl bg-secondary p-2"><div className="text-xs text-muted-foreground">تعهد</div><b>{formatMoney(member.pledged)}</b></div>
           <div className="rounded-xl bg-secondary p-2"><div className="text-xs text-muted-foreground">واریزی</div><b className="text-success">{formatMoney(member.paid)}</b></div>
@@ -260,7 +268,11 @@ function MemberDialog({
         </div>
 
         <div className="flex items-end gap-2">
-          <div className="flex-1"><Label htmlFor="ep">ویرایش مبلغ تعهد</Label><MoneyInput id="ep" value={pledged} onChange={setPledged} /></div>
+          <div className="flex-1">
+            <Label htmlFor="ep">ویرایش مبلغ تعهد</Label>
+            <MoneyInput id="ep" value={pledged} onChange={setPledged} />
+            <p className="mt-1 text-xs text-muted-foreground">عنوان با این تعهد: <b className="text-primary">{memberTitle(toNum(pledged))}</b></p>
+          </div>
           <Button variant="outline" onClick={savePledge}>ذخیره</Button>
         </div>
 

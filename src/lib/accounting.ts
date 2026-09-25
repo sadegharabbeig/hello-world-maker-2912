@@ -40,6 +40,20 @@ export function formatMoney(amount: number): string {
   return faNum.format(amount);
 }
 
+/** Honorary titles based on pledge amount (Toman) */
+export const TITLES: { title: string; min: number }[] = [
+  { title: "پهلوان", min: 600_000_000 },
+  { title: "دنور", min: 60_000_000 },
+  { title: "سردار", min: 6_000_000 },
+  { title: "عضو", min: 0 },
+];
+
+const DEFAULT_TITLE = "عضو";
+
+export function memberTitle(pledged: number): string {
+  return TITLES.find((t) => pledged >= t.min)?.title ?? DEFAULT_TITLE;
+}
+
 const jalaliMonth = new Intl.DateTimeFormat("fa-IR", { month: "long", year: "numeric" });
 const jalaliDay = new Intl.DateTimeFormat("fa-IR", {
   weekday: "long",
