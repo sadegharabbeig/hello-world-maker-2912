@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatMoney, memberTitle } from "@/lib/accounting";
+import { formatMoney, memberTitle, todayISO } from "@/lib/accounting";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -217,12 +217,15 @@ function MemberDialog({
   const [note, setNote] = useState("");
   const [pledged, setPledged] = useState(String(member.pledged));
   const [busy, setBusy] = useState(false);
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [busyDate, setBusyDate] = useState(false);
 
   const addPayment = async () => {
     const a = toNum(amount);
     if (!a) { toast.error("مبلغ واریزی را وارد کنید"); return; }
     setBusy(true);
-    const { error } = await supabase.from("member_payments").insert({ member_id: member.id, amount: a, note: note.trim() || null });
+    const { error } = await supabase.from("member_payments").insert({ member_id: member.id, amount: a, note: note.trim() || null, paid_at: todayISO() });
     setBusy(false);
     if (error) { toast.error("ثبت نشد"); return; }
     toast.success("واریزی ثبت شد");
@@ -238,6 +241,20 @@ function MemberDialog({
   const delPayment = async (id: string) => {
     if (!confirm("این واریزی حذف شود؟")) return;
     await supabase.from("member_payments").delete().eq("id", id);
+    onDone();
+  };
+  const startEditDate = (p: Payment) => {
+    setEditingDateId(p.id);
+    setEditDate(p.paid_at);
+  };
+  const saveDate = async () => {
+    if (!editingDateId || !editDate) return;
+    setBusyDate(true);
+    const { error } = await supabase.from("member_payments").update({ paid_at: editDate }).eq("id", editingDateId);
+    setBusyDate(false);
+    if (error) { toast.error("ذخیره نشد"); return; }
+    toast.success("تاریخ واریزی به‌روز شد");
+    setEditingDateId(null);
     onDone();
   };
   const delMember = async () => {
@@ -281,12 +298,30 @@ function MemberDialog({
           {payments.length === 0 && <p className="text-sm text-muted-foreground">هنوز واریزی ثبت نشده.</p>}
           <ul className="space-y-2">
             {payments.map((p) => (
-              <li key={p.id} className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2 text-sm">
-                <div>
-                  <b>{formatMoney(p.amount)}</b> تومان
-                  <div className="text-xs text-muted-foreground">{dateFmt.format(new Date(p.paid_at))}{p.note ? ` · ${p.note}` : ""}</div>
+              <li key={p.id} className="rounded-lg bg-secondary px-3 py-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <b>{formatMoney(p.amount)}</b> تومان
+                    <div className="text-xs text-muted-foreground">{dateFmt.format(new Date(p.paid_at))}{p.note ? ` · ${p.note}` : ""}</div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button className="text-xs text-primary" onClick={() => startEditDate(p)}>ویرایش تاریخ</button>
+                    <button className="text-xs text-destructive" onClick={() => delPayment(p.id)}>حذف</button>
+                  </div>
                 </div>
-                <button className="text-xs text-destructive" onClick={() => delPayment(p.id)}>حذف</button>
+                {editingDateId === p.id && (
+                  <div className="mt-2 flex items-center gap-2 border-t pt-2">
+                    <Input
+                      type="date"
+                      dir="ltr"
+                      className="flex-1 text-left"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                    />
+                    <Button size="sm" disabled={busyDate || !editDate} onClick={saveDate}>ذخیره</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingDateId(null)}>انصراف</Button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
