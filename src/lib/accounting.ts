@@ -48,8 +48,10 @@ export const TITLES: { title: string; min: number }[] = [
   { title: "عضو", min: 0 },
 ];
 
+const DEFAULT_TITLE = "عضو";
+
 export function memberTitle(pledged: number): string {
-  return (TITLES.find((t) => pledged >= t.min) ?? TITLES[TITLES.length - 1]).title;
+  return TITLES.find((t) => pledged >= t.min)?.title ?? DEFAULT_TITLE;
 }
 
 const jalaliMonth = new Intl.DateTimeFormat("fa-IR", { month: "long", year: "numeric" });
