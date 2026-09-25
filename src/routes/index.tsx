@@ -298,12 +298,30 @@ function MemberDialog({
           {payments.length === 0 && <p className="text-sm text-muted-foreground">هنوز واریزی ثبت نشده.</p>}
           <ul className="space-y-2">
             {payments.map((p) => (
-              <li key={p.id} className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2 text-sm">
-                <div>
-                  <b>{formatMoney(p.amount)}</b> تومان
-                  <div className="text-xs text-muted-foreground">{dateFmt.format(new Date(p.paid_at))}{p.note ? ` · ${p.note}` : ""}</div>
+              <li key={p.id} className="rounded-lg bg-secondary px-3 py-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <b>{formatMoney(p.amount)}</b> تومان
+                    <div className="text-xs text-muted-foreground">{dateFmt.format(new Date(p.paid_at))}{p.note ? ` · ${p.note}` : ""}</div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button className="text-xs text-primary" onClick={() => startEditDate(p)}>ویرایش تاریخ</button>
+                    <button className="text-xs text-destructive" onClick={() => delPayment(p.id)}>حذف</button>
+                  </div>
                 </div>
-                <button className="text-xs text-destructive" onClick={() => delPayment(p.id)}>حذف</button>
+                {editingDateId === p.id && (
+                  <div className="mt-2 flex items-center gap-2 border-t pt-2">
+                    <Input
+                      type="date"
+                      dir="ltr"
+                      className="flex-1 text-left"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                    />
+                    <Button size="sm" disabled={busyDate || !editDate} onClick={saveDate}>ذخیره</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingDateId(null)}>انصراف</Button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
