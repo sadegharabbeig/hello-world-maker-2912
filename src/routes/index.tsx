@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatMoney } from "@/lib/accounting";
+import { formatMoney, memberTitle } from "@/lib/accounting";
 
 export const Route = createFileRoute("/")({
   head: () => ({
