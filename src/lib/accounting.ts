@@ -48,12 +48,12 @@ const jalaliDay = new Intl.DateTimeFormat("fa-IR", {
 });
 
 export function formatMonthLabel(ym: string): string {
-  const [y, m] = ym.split("-").map(Number);
+  const [y = 0, m = 1] = ym.split("-").map(Number);
   return jalaliMonth.format(new Date(Date.UTC(y, m - 1, 15)));
 }
 
 export function formatDayLabel(dateStr: string): string {
-  const [y, m, d] = dateStr.split("-").map(Number);
+  const [y = 0, m = 1, d = 1] = dateStr.split("-").map(Number);
   return jalaliDay.format(new Date(Date.UTC(y, m - 1, d)));
 }
 
@@ -68,7 +68,7 @@ export function currentMonthKey(): string {
 }
 
 export function shiftMonth(ym: string, delta: number): string {
-  const [y, m] = ym.split("-").map(Number);
+  const [y = 0, m = 1] = ym.split("-").map(Number);
   const d = new Date(Date.UTC(y, m - 1 + delta, 1));
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
