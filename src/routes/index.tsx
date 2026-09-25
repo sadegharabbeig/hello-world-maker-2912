@@ -77,7 +77,7 @@ function Index() {
     (r) => !search || r.name.includes(search) || String(r.code) === String(toNum(search)),
   );
   const totals = rows.reduce(
-    (a, r) => ({ pledged: a.pledged + r.pledged, paid: a.paid + r.paid, remaining: a.remaining + r.remaining }),
+    (a, r) => ({ pledged: a.pledged + r.pledged, paid: a.paid + r.paid, remaining: a.remaining + Math.max(r.remaining, 0) }),
     { pledged: 0, paid: 0, remaining: 0 },
   );
   const current = rows.find((r) => r.id === selected);
