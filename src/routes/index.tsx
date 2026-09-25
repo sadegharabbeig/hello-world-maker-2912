@@ -162,7 +162,7 @@ function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
   const [pledged, setPledged] = useState("");
   const [busy, setBusy] = useState(false);
   const save = async () => {
-    if (!name.trim()) return toast.error("نام عضو را وارد کنید");
+    if (!name.trim()) { toast.error("نام عضو را وارد کنید"); return; }
     setBusy(true);
     const { data, error } = await supabase
       .from("members")
@@ -170,7 +170,7 @@ function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
       .select("code")
       .single();
     setBusy(false);
-    if (error) return toast.error("ثبت نشد، دوباره تلاش کنید");
+    if (error) { toast.error("ثبت نشد، دوباره تلاش کنید"); return; }
     toast.success(`عضو با کد ${formatMoney(data.code)} ثبت شد`);
     setName(""); setPhone(""); setPledged("");
     onOpenChange(false);
@@ -207,18 +207,18 @@ function MemberDialog({
 
   const addPayment = async () => {
     const a = toNum(amount);
-    if (!a) return toast.error("مبلغ واریزی را وارد کنید");
+    if (!a) { toast.error("مبلغ واریزی را وارد کنید"); return; }
     setBusy(true);
     const { error } = await supabase.from("member_payments").insert({ member_id: member.id, amount: a, note: note.trim() || null });
     setBusy(false);
-    if (error) return toast.error("ثبت نشد");
+    if (error) { toast.error("ثبت نشد"); return; }
     toast.success("واریزی ثبت شد");
     setAmount(""); setNote("");
     onDone();
   };
   const savePledge = async () => {
     const { error } = await supabase.from("members").update({ pledged: toNum(pledged) }).eq("id", member.id);
-    if (error) return toast.error("ذخیره نشد");
+    if (error) { toast.error("ذخیره نشد"); return; }
     toast.success("مبلغ تعهد به‌روز شد");
     onDone();
   };
