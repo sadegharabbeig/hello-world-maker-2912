@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      member_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          member_id: string
+          note: string | null
+          paid_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          member_id: string
+          note?: string | null
+          paid_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          member_id?: string
+          note?: string | null
+          paid_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          code: number
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          pledged: number
+        }
+        Insert: {
+          code?: number
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          pledged?: number
+        }
+        Update: {
+          code?: number
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          pledged?: number
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
