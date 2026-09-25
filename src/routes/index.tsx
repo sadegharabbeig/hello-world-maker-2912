@@ -217,6 +217,9 @@ function MemberDialog({
   const [note, setNote] = useState("");
   const [pledged, setPledged] = useState(String(member.pledged));
   const [busy, setBusy] = useState(false);
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [busyDate, setBusyDate] = useState(false);
 
   const addPayment = async () => {
     const a = toNum(amount);
