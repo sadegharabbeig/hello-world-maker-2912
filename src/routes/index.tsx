@@ -243,6 +243,20 @@ function MemberDialog({
     await supabase.from("member_payments").delete().eq("id", id);
     onDone();
   };
+  const startEditDate = (p: Payment) => {
+    setEditingDateId(p.id);
+    setEditDate(p.paid_at);
+  };
+  const saveDate = async () => {
+    if (!editingDateId || !editDate) return;
+    setBusyDate(true);
+    const { error } = await supabase.from("member_payments").update({ paid_at: editDate }).eq("id", editingDateId);
+    setBusyDate(false);
+    if (error) { toast.error("ذخیره نشد"); return; }
+    toast.success("تاریخ واریزی به‌روز شد");
+    setEditingDateId(null);
+    onDone();
+  };
   const delMember = async () => {
     if (!confirm(`عضو «${member.name}» و همه واریزی‌هایش حذف شود؟`)) return;
     await supabase.from("members").delete().eq("id", member.id);
