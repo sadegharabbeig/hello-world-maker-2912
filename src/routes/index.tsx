@@ -111,9 +111,12 @@ function Index() {
         <ul className="mt-4 space-y-3">
           {filtered.map((r) => (
             <li key={r.id}>
-              <button
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelected(r.id)}
-                className="flex w-full items-center gap-3 rounded-2xl border bg-card p-3 text-right shadow-sm active:scale-[0.99]"
+                onKeyDown={(e) => e.key === "Enter" && setSelected(r.id)}
+                className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border bg-card p-3 text-right shadow-sm active:scale-[0.99]"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-lg font-extrabold text-primary">
                   {formatMoney(r.code)}
@@ -125,13 +128,16 @@ function Index() {
                     <span className="text-success">واریز: {formatMoney(r.paid)}</span>
                   </div>
                 </div>
-                <div className="text-left">
-                  <div className="text-xs text-muted-foreground">مانده</div>
-                  <div className={`font-bold ${r.remaining > 0 ? "text-warning" : "text-success"}`}>
-                    {formatMoney(r.remaining)}
-                  </div>
+                <div className="flex flex-col items-center gap-1">
+                  <span
+                    className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground"
+                    onClick={(e) => { e.stopPropagation(); setSelected(r.id); }}
+                  >
+                    + واریز
+                  </span>
+                  <div className="text-xs text-muted-foreground">مانده: <b className={r.remaining > 0 ? "text-warning" : "text-success"}>{formatMoney(r.remaining)}</b></div>
                 </div>
-              </button>
+              </div>
             </li>
           ))}
         </ul>
