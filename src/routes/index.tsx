@@ -122,7 +122,10 @@ function Index() {
                   {formatMoney(r.code)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-bold">{r.name}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-bold">{r.name}</span>
+                    <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">{memberTitle(r.pledged)}</span>
+                  </div>
                   <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
                     <span>تعهد: {formatMoney(r.pledged)}</span>
                     <span className="text-success">واریز: {formatMoney(r.paid)}</span>
@@ -246,6 +249,7 @@ function MemberDialog({
         <DialogHeader>
           <DialogTitle>{member.name} — کد {formatMoney(member.code)}</DialogTitle>
         </DialogHeader>
+        <p className="-mt-1 text-center text-xs text-muted-foreground">عنوان: <b className="text-primary">{memberTitle(member.pledged)}</b></p>
         <div className="grid grid-cols-3 gap-2 text-center text-sm">
           <div className="rounded-xl bg-secondary p-2"><div className="text-xs text-muted-foreground">تعهد</div><b>{formatMoney(member.pledged)}</b></div>
           <div className="rounded-xl bg-secondary p-2"><div className="text-xs text-muted-foreground">واریزی</div><b className="text-success">{formatMoney(member.paid)}</b></div>
