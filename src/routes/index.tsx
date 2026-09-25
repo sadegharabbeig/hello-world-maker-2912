@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatMoney, memberTitle } from "@/lib/accounting";
+import { formatMoney, memberTitle, todayISO } from "@/lib/accounting";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -225,7 +225,7 @@ function MemberDialog({
     const a = toNum(amount);
     if (!a) { toast.error("مبلغ واریزی را وارد کنید"); return; }
     setBusy(true);
-    const { error } = await supabase.from("member_payments").insert({ member_id: member.id, amount: a, note: note.trim() || null });
+    const { error } = await supabase.from("member_payments").insert({ member_id: member.id, amount: a, note: note.trim() || null, paid_at: todayISO() });
     setBusy(false);
     if (error) { toast.error("ثبت نشد"); return; }
     toast.success("واریزی ثبت شد");
