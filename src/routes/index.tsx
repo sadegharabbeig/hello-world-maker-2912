@@ -280,7 +280,7 @@ function MemberDialog({
         <DialogHeader>
           <DialogTitle>{member.name} — کد {formatMoney(member.code)}</DialogTitle>
         </DialogHeader>
-        <p className="-mt-1 text-center text-xs text-muted-foreground">عنوان: <b className="text-primary">{memberTitle(member.pledged)}</b></p>
+        <p className="-mt-1 text-center text-xs text-muted-foreground">عنوان: <b className="text-primary">{memberTitle(member.pledged)}</b>{member.legion_number ? <> · لژیون: <b className="text-primary">{member.legion_number}</b></> : null}</p>
         <div className="grid grid-cols-3 gap-2 text-center text-sm">
           <div className="rounded-xl bg-secondary p-2"><div className="text-xs text-muted-foreground">تعهد</div><b>{formatMoney(member.pledged)}</b></div>
           <div className="rounded-xl bg-secondary p-2"><div className="text-xs text-muted-foreground">واریزی</div><b className="text-success">{formatMoney(member.paid)}</b></div>
@@ -292,6 +292,14 @@ function MemberDialog({
           <MoneyInput id="pa" value={amount} onChange={setAmount} />
           <Input placeholder="توضیح (اختیاری)" value={note} onChange={(e) => setNote(e.target.value)} />
           <Button className="w-full" disabled={busy} onClick={addPayment}>ثبت واریزی</Button>
+        </div>
+
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Label htmlFor="elg">شماره لژیون</Label>
+            <Input id="elg" dir="ltr" value={legion} onChange={(e) => setLegion(e.target.value)} placeholder="مثلاً ۱۲۳۴" />
+          </div>
+          <Button variant="outline" onClick={saveLegion}>ذخیره</Button>
         </div>
 
         <div className="flex items-end gap-2">
