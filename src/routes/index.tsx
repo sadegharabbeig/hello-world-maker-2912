@@ -194,6 +194,7 @@ function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
         <div className="space-y-3">
           <div><Label htmlFor="n">نام و نام خانوادگی</Label><Input id="n" value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label htmlFor="ph">شماره تماس (اختیاری)</Label><Input id="ph" dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+          <div><Label htmlFor="lg">شماره لژیون</Label><Input id="lg" dir="ltr" value={legion} onChange={(e) => setLegion(e.target.value)} placeholder="مثلاً ۱۲۳۴" /></div>
           <div>
             <Label htmlFor="pl">مبلغ تعهد (تومان)</Label>
             <MoneyInput id="pl" value={pledged} onChange={setPledged} />
