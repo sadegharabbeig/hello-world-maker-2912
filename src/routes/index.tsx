@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Member = { id: string; code: number; name: string; phone: string | null; pledged: number };
+type Member = { id: string; code: number; name: string; phone: string | null; pledged: number; legion_number: string | null };
 type Payment = { id: string; member_id: string; amount: number; note: string | null; paid_at: string };
 
 const toNum = (s: string) =>
@@ -126,7 +126,8 @@ function Index() {
                     <span className="truncate font-bold">{r.name}</span>
                     <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">{memberTitle(r.pledged)}</span>
                   </div>
-                  <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
+                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    {r.legion_number && <span>لژیون: {r.legion_number}</span>}
                     <span>تعهد: {formatMoney(r.pledged)}</span>
                     <span className="text-success">واریز: {formatMoney(r.paid)}</span>
                   </div>
@@ -168,6 +169,7 @@ function Index() {
 function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; onDone: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [legion, setLegion] = useState("");
   const [pledged, setPledged] = useState("");
   const [busy, setBusy] = useState(false);
   const save = async () => {
@@ -175,13 +177,13 @@ function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
     setBusy(true);
     const { data, error } = await supabase
       .from("members")
-      .insert({ name: name.trim(), phone: phone.trim() || null, pledged: toNum(pledged) })
+      .insert({ name: name.trim(), phone: phone.trim() || null, legion_number: legion.trim() || null, pledged: toNum(pledged) })
       .select("code")
       .single();
     setBusy(false);
     if (error) { toast.error("ثبت نشد، دوباره تلاش کنید"); return; }
     toast.success(`عضو با کد ${formatMoney(data.code)} ثبت شد`);
-    setName(""); setPhone(""); setPledged("");
+    setName(""); setPhone(""); setLegion(""); setPledged("");
     onOpenChange(false);
     onDone();
   };
@@ -193,6 +195,7 @@ function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
         <div className="space-y-3">
           <div><Label htmlFor="n">نام و نام خانوادگی</Label><Input id="n" value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label htmlFor="ph">شماره تماس (اختیاری)</Label><Input id="ph" dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+          <div><Label htmlFor="lg">شماره لژیون</Label><Input id="lg" dir="ltr" value={legion} onChange={(e) => setLegion(e.target.value)} placeholder="مثلاً ۱۲۳۴" /></div>
           <div>
             <Label htmlFor="pl">مبلغ تعهد (تومان)</Label>
             <MoneyInput id="pl" value={pledged} onChange={setPledged} />
@@ -216,6 +219,7 @@ function MemberDialog({
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [pledged, setPledged] = useState(String(member.pledged));
+  const [legion, setLegion] = useState(member.legion_number ?? "");
   const [busy, setBusy] = useState(false);
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState("");
@@ -236,6 +240,12 @@ function MemberDialog({
     const { error } = await supabase.from("members").update({ pledged: toNum(pledged) }).eq("id", member.id);
     if (error) { toast.error("ذخیره نشد"); return; }
     toast.success("مبلغ تعهد به‌روز شد");
+    onDone();
+  };
+  const saveLegion = async () => {
+    const { error } = await supabase.from("members").update({ legion_number: legion.trim() || null }).eq("id", member.id);
+    if (error) { toast.error("ذخیره نشد"); return; }
+    toast.success("شماره لژیون به‌روز شد");
     onDone();
   };
   const delPayment = async (id: string) => {
@@ -270,7 +280,7 @@ function MemberDialog({
         <DialogHeader>
           <DialogTitle>{member.name} — کد {formatMoney(member.code)}</DialogTitle>
         </DialogHeader>
-        <p className="-mt-1 text-center text-xs text-muted-foreground">عنوان: <b className="text-primary">{memberTitle(member.pledged)}</b></p>
+        <p className="-mt-1 text-center text-xs text-muted-foreground">عنوان: <b className="text-primary">{memberTitle(member.pledged)}</b>{member.legion_number ? <> · لژیون: <b className="text-primary">{member.legion_number}</b></> : null}</p>
         <div className="grid grid-cols-3 gap-2 text-center text-sm">
           <div className="rounded-xl bg-secondary p-2"><div className="text-xs text-muted-foreground">تعهد</div><b>{formatMoney(member.pledged)}</b></div>
           <div className="rounded-xl bg-secondary p-2"><div className="text-xs text-muted-foreground">واریزی</div><b className="text-success">{formatMoney(member.paid)}</b></div>
@@ -282,6 +292,14 @@ function MemberDialog({
           <MoneyInput id="pa" value={amount} onChange={setAmount} />
           <Input placeholder="توضیح (اختیاری)" value={note} onChange={(e) => setNote(e.target.value)} />
           <Button className="w-full" disabled={busy} onClick={addPayment}>ثبت واریزی</Button>
+        </div>
+
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Label htmlFor="elg">شماره لژیون</Label>
+            <Input id="elg" dir="ltr" value={legion} onChange={(e) => setLegion(e.target.value)} placeholder="مثلاً ۱۲۳۴" />
+          </div>
+          <Button variant="outline" onClick={saveLegion}>ذخیره</Button>
         </div>
 
         <div className="flex items-end gap-2">
