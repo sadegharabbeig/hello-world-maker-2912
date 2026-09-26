@@ -126,7 +126,8 @@ function Index() {
                     <span className="truncate font-bold">{r.name}</span>
                     <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">{memberTitle(r.pledged)}</span>
                   </div>
-                  <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
+                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    {r.legion_number && <span>لژیون: {r.legion_number}</span>}
                     <span>تعهد: {formatMoney(r.pledged)}</span>
                     <span className="text-success">واریز: {formatMoney(r.paid)}</span>
                   </div>
