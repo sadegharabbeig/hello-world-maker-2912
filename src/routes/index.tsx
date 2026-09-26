@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Member = { id: string; code: number; name: string; phone: string | null; pledged: number };
+type Member = { id: string; code: number; name: string; phone: string | null; pledged: number; legion_number: string | null };
 type Payment = { id: string; member_id: string; amount: number; note: string | null; paid_at: string };
 
 const toNum = (s: string) =>
@@ -168,6 +168,7 @@ function Index() {
 function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; onDone: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [legion, setLegion] = useState("");
   const [pledged, setPledged] = useState("");
   const [busy, setBusy] = useState(false);
   const save = async () => {
@@ -175,13 +176,13 @@ function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
     setBusy(true);
     const { data, error } = await supabase
       .from("members")
-      .insert({ name: name.trim(), phone: phone.trim() || null, pledged: toNum(pledged) })
+      .insert({ name: name.trim(), phone: phone.trim() || null, legion_number: legion.trim() || null, pledged: toNum(pledged) })
       .select("code")
       .single();
     setBusy(false);
     if (error) { toast.error("ثبت نشد، دوباره تلاش کنید"); return; }
     toast.success(`عضو با کد ${formatMoney(data.code)} ثبت شد`);
-    setName(""); setPhone(""); setPledged("");
+    setName(""); setPhone(""); setLegion(""); setPledged("");
     onOpenChange(false);
     onDone();
   };
