@@ -1,1 +1,16 @@
-{"name":"حساب اعضا","short_name":"حساب اعضا","start_url":"/","display":"standalone","dir":"rtl","lang":"fa","background_color":"#f7f5ee","theme_color":"#1f5f4a","icons":[{"src":"/favicon.ico","sizes":"64x64","type":"image/x-icon"}]}
+{
+  "name": "حساب اعضا",
+  "short_name": "حساب اعضا",
+  "description": "ثبت اعضا، تعهدات، واریزی‌ها و مانده حساب",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "fa",
+  "background_color": "#f7f5ee",
+  "theme_color": "#1f5f4a",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
