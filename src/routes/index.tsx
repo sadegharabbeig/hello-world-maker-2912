@@ -219,6 +219,7 @@ function MemberDialog({
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [pledged, setPledged] = useState(String(member.pledged));
+  const [legion, setLegion] = useState(member.legion_number ?? "");
   const [busy, setBusy] = useState(false);
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState("");
@@ -239,6 +240,12 @@ function MemberDialog({
     const { error } = await supabase.from("members").update({ pledged: toNum(pledged) }).eq("id", member.id);
     if (error) { toast.error("ذخیره نشد"); return; }
     toast.success("مبلغ تعهد به‌روز شد");
+    onDone();
+  };
+  const saveLegion = async () => {
+    const { error } = await supabase.from("members").update({ legion_number: legion.trim() || null }).eq("id", member.id);
+    if (error) { toast.error("ذخیره نشد"); return; }
+    toast.success("شماره لژیون به‌روز شد");
     onDone();
   };
   const delPayment = async (id: string) => {
