@@ -15,6 +15,13 @@
       "when": 1790355186790,
       "tag": "0001_members_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790448251013,
+      "tag": "0002_add_legion_number",
+      "breakpoints": true
     }
   ]
 }

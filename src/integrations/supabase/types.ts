@@ -54,6 +54,7 @@ export type Database = {
           code: number
           created_at: string
           id: string
+          legion_number: string | null
           name: string
           phone: string | null
           pledged: number
@@ -62,6 +63,7 @@ export type Database = {
           code?: number
           created_at?: string
           id?: string
+          legion_number?: string | null
           name: string
           phone?: string | null
           pledged?: number
@@ -70,6 +72,7 @@ export type Database = {
           code?: number
           created_at?: string
           id?: string
+          legion_number?: string | null
           name?: string
           phone?: string | null
           pledged?: number
