@@ -86,7 +86,12 @@ function Index() {
   return (
     <div className="mx-auto min-h-screen max-w-md bg-background pb-28">
       <header className="rounded-b-3xl bg-primary px-5 pb-6 pt-8 text-primary-foreground">
-        <h1 className="text-2xl font-extrabold">حساب اعضا</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-extrabold">حساب اعضا</h1>
+          <Link to="/report" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
+            گزارش
+          </Link>
+        </div>
         <p className="mt-1 text-sm opacity-80">{formatMoney(rows.length)} عضو ثبت‌شده</p>
         <div className="mt-5 grid grid-cols-3 gap-2 text-center">
           {[
