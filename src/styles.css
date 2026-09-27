@@ -146,3 +146,30 @@
 body { font-family: "Vazirmatn", system-ui, sans-serif; }
 :root { --success: oklch(0.55 0.13 155); --warning: oklch(0.6 0.16 45); }
 @theme inline { --color-success: var(--success); --color-warning: var(--warning); }
+
+/* Keep the full visual theme on older Android browsers without OKLCH support. */
+@supports not (color: oklch(0.5 0 0)) {
+  :root {
+    --background: #f8f6ef;
+    --foreground: #172033;
+    --card: #ffffff;
+    --card-foreground: #172033;
+    --popover: #ffffff;
+    --popover-foreground: #172033;
+    --primary: #17684d;
+    --primary-foreground: #f8fafc;
+    --secondary: #f1f4f6;
+    --secondary-foreground: #273246;
+    --muted: #f1f4f6;
+    --muted-foreground: #647084;
+    --accent: #f1f4f6;
+    --accent-foreground: #273246;
+    --destructive: #dc2626;
+    --destructive-foreground: #f8fafc;
+    --border: #dde2e8;
+    --input: #dde2e8;
+    --ring: #8793a4;
+    --success: #24865a;
+    --warning: #c45b16;
+  }
+}
