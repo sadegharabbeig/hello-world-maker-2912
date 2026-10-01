@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMoney, memberTitle, todayISO } from "@/lib/accounting";
+import { formatJalali } from "@/lib/jalali";
+import { JalaliDateInput } from "@/components/JalaliDateInput";
+import { scheduleBackup, downloadBackup } from "@/lib/backup";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -81,16 +84,24 @@ function Index() {
     { pledged: 0, paid: 0, remaining: 0 },
   );
   const current = rows.find((r) => r.id === selected);
-  const refresh = () => qc.invalidateQueries({ queryKey: ["members"] });
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["members"] }); scheduleBackup(); };
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-background pb-28">
       <header className="rounded-b-3xl bg-primary px-5 pb-6 pt-8 text-primary-foreground">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold">حساب اعضا</h1>
-          <Link to="/report" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
-            گزارش
-          </Link>
+          <div className="flex gap-2">
+            <button
+              className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold"
+              onClick={() => downloadBackup().then(() => toast.success("فایل اکسل پشتیبان دانلود شد")).catch(() => toast.error("پشتیبان‌گیری نشد"))}
+            >
+              بکاپ اکسل
+            </button>
+            <Link to="/report" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
+              گزارش
+            </Link>
+          </div>
         </div>
         <p className="mt-1 text-sm opacity-80">{formatMoney(rows.length)} عضو ثبت‌شده</p>
         <div className="mt-5 grid grid-cols-3 gap-2 text-center">
@@ -223,6 +234,7 @@ function MemberDialog({
 }) {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [payDate, setPayDate] = useState(todayISO());
   const [pledged, setPledged] = useState(String(member.pledged));
   const [legion, setLegion] = useState(member.legion_number ?? "");
   const [busy, setBusy] = useState(false);
@@ -234,11 +246,11 @@ function MemberDialog({
     const a = toNum(amount);
     if (!a) { toast.error("مبلغ واریزی را وارد کنید"); return; }
     setBusy(true);
-    const { error } = await supabase.from("member_payments").insert({ member_id: member.id, amount: a, note: note.trim() || null, paid_at: todayISO() });
+    const { error } = await supabase.from("member_payments").insert({ member_id: member.id, amount: a, note: note.trim() || null, paid_at: payDate || todayISO() });
     setBusy(false);
     if (error) { toast.error("ثبت نشد"); return; }
     toast.success("واریزی ثبت شد");
-    setAmount(""); setNote("");
+    setAmount(""); setNote(""); setPayDate(todayISO());
     onDone();
   };
   const savePledge = async () => {
@@ -277,7 +289,6 @@ function MemberDialog({
     await supabase.from("members").delete().eq("id", member.id);
     onClose(); onDone();
   };
-  const dateFmt = new Intl.DateTimeFormat("fa-IR", { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -296,6 +307,8 @@ function MemberDialog({
           <Label htmlFor="pa">ثبت واریزی جدید (تومان)</Label>
           <MoneyInput id="pa" value={amount} onChange={setAmount} />
           <Input placeholder="توضیح (اختیاری)" value={note} onChange={(e) => setNote(e.target.value)} />
+          <Label>تاریخ واریز</Label>
+          <JalaliDateInput value={payDate} onChange={setPayDate} />
           <Button className="w-full" disabled={busy} onClick={addPayment}>ثبت واریزی</Button>
         </div>
 
@@ -325,7 +338,7 @@ function MemberDialog({
                 <div className="flex items-center justify-between">
                   <div>
                     <b>{formatMoney(p.amount)}</b> تومان
-                    <div className="text-xs text-muted-foreground">{dateFmt.format(new Date(p.paid_at))}{p.note ? ` · ${p.note}` : ""}</div>
+                    <div className="text-xs text-muted-foreground">{formatJalali(p.paid_at)}{p.note ? ` · ${p.note}` : ""}</div>
                   </div>
                   <div className="flex gap-3">
                     <button className="text-xs text-primary" onClick={() => startEditDate(p)}>ویرایش تاریخ</button>
@@ -334,13 +347,7 @@ function MemberDialog({
                 </div>
                 {editingDateId === p.id && (
                   <div className="mt-2 flex items-center gap-2 border-t pt-2">
-                    <Input
-                      type="date"
-                      dir="ltr"
-                      className="flex-1 text-left"
-                      value={editDate}
-                      onChange={(e) => setEditDate(e.target.value)}
-                    />
+                    <div className="flex-1"><JalaliDateInput value={editDate} onChange={setEditDate} /></div>
                     <Button size="sm" disabled={busyDate || !editDate} onClick={saveDate}>ذخیره</Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditingDateId(null)}>انصراف</Button>
                   </div>

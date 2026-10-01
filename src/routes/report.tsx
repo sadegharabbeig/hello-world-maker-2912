@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/accounting";
+import { formatJalali } from "@/lib/jalali";
+import { JalaliDateInput } from "@/components/JalaliDateInput";
 
 export const Route = createFileRoute("/report")({
   head: () => ({
@@ -61,7 +63,6 @@ function Report() {
   }, [data, from, to, legion, earlyOnly]);
 
   const total = filtered.reduce((a, r) => a + r.amount, 0);
-  const dateFmt = new Intl.DateTimeFormat("fa-IR", { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-background pb-10">
@@ -85,14 +86,14 @@ function Report() {
       </header>
 
       <div className="space-y-3 px-4 pt-4">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <div>
             <Label htmlFor="from">از تاریخ</Label>
-            <Input id="from" type="date" dir="ltr" className="text-left" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <JalaliDateInput id="from" allowEmpty value={from} onChange={setFrom} />
           </div>
           <div>
             <Label htmlFor="to">تا تاریخ</Label>
-            <Input id="to" type="date" dir="ltr" className="text-left" value={to} onChange={(e) => setTo(e.target.value)} />
+            <JalaliDateInput id="to" allowEmpty value={to} onChange={setTo} />
           </div>
         </div>
         <div>
@@ -121,7 +122,7 @@ function Report() {
             <li key={r.id} className="rounded-xl border bg-card px-3 py-2 text-sm shadow-sm">
               <div className="flex items-center justify-between">
                 <b>{formatMoney(r.amount)} تومان</b>
-                <span className="text-xs text-muted-foreground">{dateFmt.format(new Date(r.paid_at))}</span>
+                <span className="text-xs text-muted-foreground">{formatJalali(r.paid_at)}</span>
               </div>
               <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <span>{r.member?.name} (کد {formatMoney(r.member?.code ?? 0)})</span>
