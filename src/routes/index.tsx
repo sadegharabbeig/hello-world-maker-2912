@@ -27,7 +27,21 @@ export const Route = createFileRoute("/")({
 });
 
 type Member = { id: string; code: number; name: string; phone: string | null; pledged: number; legion_number: string | null };
-type Payment = { id: string; member_id: string; amount: number; note: string | null; paid_at: string };
+type Payment = { id: string; member_id: string; amount: number; note: string | null; paid_at: string; tracking_code: string | null; receipt_url: string | null };
+
+async function uploadReceipt(file: File) {
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from("receipts").upload(path, file, { contentType: file.type });
+  if (error) throw error;
+  return path;
+}
+async function openReceipt(path: string) {
+  const w = window.open("", "_blank");
+  const { data } = await supabase.storage.from("receipts").createSignedUrl(path, 3600);
+  if (data?.signedUrl) { if (w) w.location.href = data.signedUrl; else window.location.href = data.signedUrl; }
+  else { w?.close(); toast.error("عکس باز نشد"); }
+}
 
 const toNum = (s: string) =>
   Number(s.replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[^\d]/g, "")) || 0;
@@ -234,23 +248,32 @@ function MemberDialog({
 }) {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [tracking, setTracking] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [fileKey, setFileKey] = useState(0);
   const [payDate, setPayDate] = useState(todayISO());
   const [pledged, setPledged] = useState(String(member.pledged));
   const [legion, setLegion] = useState(member.legion_number ?? "");
   const [busy, setBusy] = useState(false);
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState("");
+  const [editTracking, setEditTracking] = useState("");
+  const [editFile, setEditFile] = useState<File | null>(null);
   const [busyDate, setBusyDate] = useState(false);
 
   const addPayment = async () => {
     const a = toNum(amount);
     if (!a) { toast.error("مبلغ واریزی را وارد کنید"); return; }
+    if (!tracking.trim()) { toast.error("کد پیگیری را وارد کنید"); return; }
     setBusy(true);
-    const { error } = await supabase.from("member_payments").insert({ member_id: member.id, amount: a, note: note.trim() || null, paid_at: payDate || todayISO() });
+    let receipt_url: string | null = null;
+    try { if (file) receipt_url = await uploadReceipt(file); }
+    catch { setBusy(false); toast.error("عکس فیش آپلود نشد"); return; }
+    const { error } = await supabase.from("member_payments").insert({ member_id: member.id, amount: a, note: note.trim() || null, tracking_code: tracking.trim(), receipt_url, paid_at: payDate || todayISO() });
     setBusy(false);
     if (error) { toast.error("ثبت نشد"); return; }
     toast.success("واریزی ثبت شد");
-    setAmount(""); setNote(""); setPayDate(todayISO());
+    setAmount(""); setNote(""); setTracking(""); setFile(null); setFileKey((k) => k + 1); setPayDate(todayISO());
     onDone();
   };
   const savePledge = async () => {
@@ -273,14 +296,20 @@ function MemberDialog({
   const startEditDate = (p: Payment) => {
     setEditingDateId(p.id);
     setEditDate(p.paid_at);
+    setEditTracking(p.tracking_code ?? "");
+    setEditFile(null);
   };
   const saveDate = async () => {
     if (!editingDateId || !editDate) return;
+    if (!editTracking.trim()) { toast.error("کد پیگیری را وارد کنید"); return; }
     setBusyDate(true);
-    const { error } = await supabase.from("member_payments").update({ paid_at: editDate }).eq("id", editingDateId);
+    const upd: { paid_at: string; tracking_code: string; receipt_url?: string } = { paid_at: editDate, tracking_code: editTracking.trim() };
+    try { if (editFile) upd.receipt_url = await uploadReceipt(editFile); }
+    catch { setBusyDate(false); toast.error("عکس فیش آپلود نشد"); return; }
+    const { error } = await supabase.from("member_payments").update(upd).eq("id", editingDateId);
     setBusyDate(false);
     if (error) { toast.error("ذخیره نشد"); return; }
-    toast.success("تاریخ واریزی به‌روز شد");
+    toast.success("واریزی به‌روز شد");
     setEditingDateId(null);
     onDone();
   };
