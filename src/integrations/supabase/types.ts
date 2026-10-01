@@ -22,6 +22,8 @@ export type Database = {
           member_id: string
           note: string | null
           paid_at: string
+          receipt_url: string | null
+          tracking_code: string | null
         }
         Insert: {
           amount: number
@@ -30,6 +32,8 @@ export type Database = {
           member_id: string
           note?: string | null
           paid_at?: string
+          receipt_url?: string | null
+          tracking_code?: string | null
         }
         Update: {
           amount?: number
@@ -38,6 +42,8 @@ export type Database = {
           member_id?: string
           note?: string | null
           paid_at?: string
+          receipt_url?: string | null
+          tracking_code?: string | null
         }
         Relationships: [
           {
