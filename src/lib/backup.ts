@@ -27,7 +27,8 @@ async function buildWorkbook(): Promise<Blob> {
     const mm = byId.get(y.member_id);
     return {
       "تاریخ": formatJalaliNumeric(y.paid_at), "کد عضو": mm?.code ?? "", "نام": mm?.name ?? "",
-      "لژیون": mm?.legion_number ?? "", "مبلغ": y.amount, "توضیح": y.note ?? "",
+      "لژیون": mm?.legion_number ?? "", "مبلغ": y.amount, "کد پیگیری": y.tracking_code ?? "",
+      "فیش": y.receipt_url ? "دارد" : "ندارد", "توضیح": y.note ?? "",
     };
   });
   const wb = XLSX.utils.book_new();
