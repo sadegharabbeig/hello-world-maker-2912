@@ -393,6 +393,7 @@ function MemberDialog({
                     <div className="text-xs text-muted-foreground">{formatJalali(p.paid_at)}{p.note ? ` · ${p.note}` : ""}</div>
                     <div className="text-xs text-muted-foreground">پیگیری: <b>{p.tracking_code || "—"}</b></div>
                     {p.receipt_url && <button className="text-xs text-primary underline" onClick={() => openReceipt(p.receipt_url!)}>مشاهده فیش</button>}
+                    <button className="text-xs text-primary underline" onClick={() => pickNewPhoto(p.id)}>{p.receipt_url ? "تغییر عکس" : "افزودن عکس"}</button>
                   </div>
                   <div className="flex gap-3">
                     <button className="text-xs text-primary" onClick={() => startEditDate(p)}>ویرایش</button>
@@ -416,6 +417,7 @@ function MemberDialog({
           </ul>
         </div>
         <Button variant="ghost" className="text-destructive" onClick={delMember}>حذف عضو</Button>
+        <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={uploadNewPhoto} />
       </DialogContent>
     </Dialog>
   );
