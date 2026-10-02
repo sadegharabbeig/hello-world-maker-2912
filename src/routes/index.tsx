@@ -335,9 +335,12 @@ function MemberDialog({
         <div className="space-y-2 rounded-xl border p-3">
           <Label htmlFor="pa">ثبت واریزی جدید (تومان)</Label>
           <MoneyInput id="pa" value={amount} onChange={setAmount} />
+          <Input placeholder="کد پیگیری (الزامی)" dir="ltr" value={tracking} onChange={(e) => setTracking(e.target.value)} />
           <Input placeholder="توضیح (اختیاری)" value={note} onChange={(e) => setNote(e.target.value)} />
           <Label>تاریخ واریز</Label>
           <JalaliDateInput value={payDate} onChange={setPayDate} />
+          <Label htmlFor="rf">عکس فیش واریزی (اختیاری)</Label>
+          <Input key={fileKey} id="rf" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
           <Button className="w-full" disabled={busy} onClick={addPayment}>ثبت واریزی</Button>
         </div>
 
@@ -368,17 +371,24 @@ function MemberDialog({
                   <div>
                     <b>{formatMoney(p.amount)}</b> تومان
                     <div className="text-xs text-muted-foreground">{formatJalali(p.paid_at)}{p.note ? ` · ${p.note}` : ""}</div>
+                    <div className="text-xs text-muted-foreground">پیگیری: <b>{p.tracking_code || "—"}</b></div>
+                    {p.receipt_url && <button className="text-xs text-primary underline" onClick={() => openReceipt(p.receipt_url!)}>مشاهده فیش</button>}
                   </div>
                   <div className="flex gap-3">
-                    <button className="text-xs text-primary" onClick={() => startEditDate(p)}>ویرایش تاریخ</button>
+                    <button className="text-xs text-primary" onClick={() => startEditDate(p)}>ویرایش</button>
                     <button className="text-xs text-destructive" onClick={() => delPayment(p.id)}>حذف</button>
                   </div>
                 </div>
                 {editingDateId === p.id && (
-                  <div className="mt-2 flex items-center gap-2 border-t pt-2">
-                    <div className="flex-1"><JalaliDateInput value={editDate} onChange={setEditDate} /></div>
-                    <Button size="sm" disabled={busyDate || !editDate} onClick={saveDate}>ذخیره</Button>
-                    <Button size="sm" variant="ghost" onClick={() => setEditingDateId(null)}>انصراف</Button>
+                  <div className="mt-2 space-y-2 border-t pt-2">
+                    <JalaliDateInput value={editDate} onChange={setEditDate} />
+                    <Input placeholder="کد پیگیری (الزامی)" dir="ltr" value={editTracking} onChange={(e) => setEditTracking(e.target.value)} />
+                    <Label className="text-xs">{p.receipt_url ? "تعویض عکس فیش (اختیاری)" : "افزودن عکس فیش (اختیاری)"}</Label>
+                    <Input type="file" accept="image/*" onChange={(e) => setEditFile(e.target.files?.[0] ?? null)} />
+                    <div className="flex gap-2">
+                      <Button size="sm" disabled={busyDate || !editDate} onClick={saveDate}>ذخیره</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingDateId(null)}>انصراف</Button>
+                    </div>
                   </div>
                 )}
               </li>
