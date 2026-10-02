@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -313,6 +313,26 @@ function MemberDialog({
     setEditingDateId(null);
     onDone();
   };
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoEditId, setPhotoEditId] = useState<string | null>(null);
+
+  const pickNewPhoto = (id: string) => {
+    setPhotoEditId(id);
+    photoInputRef.current?.click();
+  };
+  const uploadNewPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f || !photoEditId) return;
+    try {
+      const url = await uploadReceipt(f);
+      const { error } = await supabase.from("member_payments").update({ receipt_url: url }).eq("id", photoEditId);
+      if (error) { toast.error("ذخیره نشد"); return; }
+      toast.success("عکس فیش تعویض شد");
+      onDone();
+    } catch { toast.error("عکس آپلود نشد"); }
+    setPhotoEditId(null);
+    e.target.value = "";
+  };
   const delMember = async () => {
     if (!confirm(`عضو «${member.name}» و همه واریزی‌هایش حذف شود؟`)) return;
     await supabase.from("members").delete().eq("id", member.id);
@@ -373,6 +393,7 @@ function MemberDialog({
                     <div className="text-xs text-muted-foreground">{formatJalali(p.paid_at)}{p.note ? ` · ${p.note}` : ""}</div>
                     <div className="text-xs text-muted-foreground">پیگیری: <b>{p.tracking_code || "—"}</b></div>
                     {p.receipt_url && <button className="text-xs text-primary underline" onClick={() => openReceipt(p.receipt_url!)}>مشاهده فیش</button>}
+                    <button className="text-xs text-primary underline" onClick={() => pickNewPhoto(p.id)}>{p.receipt_url ? "تغییر عکس" : "افزودن عکس"}</button>
                   </div>
                   <div className="flex gap-3">
                     <button className="text-xs text-primary" onClick={() => startEditDate(p)}>ویرایش</button>
@@ -396,6 +417,7 @@ function MemberDialog({
           </ul>
         </div>
         <Button variant="ghost" className="text-destructive" onClick={delMember}>حذف عضو</Button>
+        <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={uploadNewPhoto} />
       </DialogContent>
     </Dialog>
   );
