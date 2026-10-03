@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMyRole } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -12,7 +13,7 @@ import { formatJalali } from "@/lib/jalali";
 import { JalaliDateInput } from "@/components/JalaliDateInput";
 import { scheduleBackup, downloadBackup } from "@/lib/backup";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "حساب اعضا | ثبت تعهد و واریزی" },
@@ -99,6 +100,14 @@ function Index() {
   );
   const current = rows.find((r) => r.id === selected);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["members"] }); scheduleBackup(); };
+  const { data: me } = useMyRole();
+  const canEdit = me?.role === "admin" || me?.role === "editor";
+  const navigate = useNavigate();
+  const signOut = async () => {
+    await qc.cancelQueries(); qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-background pb-28">
@@ -115,6 +124,10 @@ function Index() {
             <Link to="/report" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
               گزارش
             </Link>
+            {me?.role === "admin" && (
+              <Link to="/users" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">کاربران</Link>
+            )}
+            <button className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold" onClick={signOut}>خروج</button>
           </div>
         </div>
         <p className="mt-1 text-sm opacity-80">{formatMoney(rows.length)} عضو ثبت‌شده</p>
@@ -163,12 +176,12 @@ function Index() {
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <span
+                  {canEdit && <span
                     className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground"
                     onClick={(e) => { e.stopPropagation(); setSelected(r.id); }}
                   >
                     + واریز
-                  </span>
+                  </span>}
                   <div className="text-xs text-muted-foreground">مانده: <b className={r.remaining > 0 ? "text-warning" : "text-success"}>{formatMoney(r.remaining)}</b></div>
                 </div>
               </div>
@@ -177,19 +190,20 @@ function Index() {
         </ul>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 mx-auto max-w-md p-4">
+      {canEdit && <div className="fixed inset-x-0 bottom-0 mx-auto max-w-md p-4">
         <Button className="h-14 w-full rounded-2xl text-base font-bold shadow-lg" onClick={() => setAddOpen(true)}>
           + افزودن عضو جدید
         </Button>
-      </div>
+      </div>}
 
-      <AddMemberDialog open={addOpen} onOpenChange={setAddOpen} onDone={refresh} />
+      {canEdit && <AddMemberDialog open={addOpen} onOpenChange={setAddOpen} onDone={refresh} />}
       {current && (
         <MemberDialog
           member={current}
           payments={data?.payments.filter((p) => p.member_id === current.id) ?? []}
           onClose={() => setSelected(null)}
           onDone={refresh}
+          canEdit={canEdit}
         />
       )}
     </div>
@@ -239,12 +253,13 @@ function AddMemberDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
 }
 
 function MemberDialog({
-  member, payments, onClose, onDone,
+  member, payments, onClose, onDone, canEdit,
 }: {
   member: Member & { paid: number; remaining: number };
   payments: Payment[];
   onClose: () => void;
   onDone: () => void;
+  canEdit: boolean;
 }) {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -352,6 +367,7 @@ function MemberDialog({
           <div className="rounded-xl bg-secondary p-2"><div className="text-xs text-muted-foreground">مانده</div><b className="text-warning">{formatMoney(member.remaining)}</b></div>
         </div>
 
+        {canEdit && <>
         <div className="space-y-2 rounded-xl border p-3">
           <Label htmlFor="pa">ثبت واریزی جدید (تومان)</Label>
           <MoneyInput id="pa" value={amount} onChange={setAmount} />
@@ -380,6 +396,7 @@ function MemberDialog({
           </div>
           <Button variant="outline" onClick={savePledge}>ذخیره</Button>
         </div>
+        </>}
 
         <div>
           <h3 className="mb-2 font-bold">سابقه واریزی‌ها</h3>
@@ -393,14 +410,14 @@ function MemberDialog({
                     <div className="text-xs text-muted-foreground">{formatJalali(p.paid_at)}{p.note ? ` · ${p.note}` : ""}</div>
                     <div className="text-xs text-muted-foreground">پیگیری: <b>{p.tracking_code || "—"}</b></div>
                     {p.receipt_url && <button className="text-xs text-primary underline" onClick={() => openReceipt(p.receipt_url!)}>مشاهده فیش</button>}
-                    <button className="text-xs text-primary underline" onClick={() => pickNewPhoto(p.id)}>{p.receipt_url ? "تغییر عکس" : "افزودن عکس"}</button>
+                    {canEdit && <button className="text-xs text-primary underline" onClick={() => pickNewPhoto(p.id)}>{p.receipt_url ? "تغییر عکس" : "افزودن عکس"}</button>}
                   </div>
-                  <div className="flex gap-3">
+                  {canEdit && <div className="flex gap-3">
                     <button className="text-xs text-primary" onClick={() => startEditDate(p)}>ویرایش</button>
                     <button className="text-xs text-destructive" onClick={() => delPayment(p.id)}>حذف</button>
-                  </div>
+                  </div>}
                 </div>
-                {editingDateId === p.id && (
+                {canEdit && editingDateId === p.id && (
                   <div className="mt-2 space-y-2 border-t pt-2">
                     <JalaliDateInput value={editDate} onChange={setEditDate} />
                     <Input placeholder="کد پیگیری (الزامی)" dir="ltr" value={editTracking} onChange={(e) => setEditTracking(e.target.value)} />
@@ -416,7 +433,7 @@ function MemberDialog({
             ))}
           </ul>
         </div>
-        <Button variant="ghost" className="text-destructive" onClick={delMember}>حذف عضو</Button>
+        {canEdit && <Button variant="ghost" className="text-destructive" onClick={delMember}>حذف عضو</Button>}
         <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={uploadNewPhoto} />
       </DialogContent>
     </Dialog>
