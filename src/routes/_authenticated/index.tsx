@@ -176,7 +176,7 @@ function Index() {
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <span
+                  {canEdit && <span
                     className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground"
                     onClick={(e) => { e.stopPropagation(); setSelected(r.id); }}
                   >
