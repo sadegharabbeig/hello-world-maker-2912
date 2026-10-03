@@ -181,7 +181,7 @@ function Index() {
                     onClick={(e) => { e.stopPropagation(); setSelected(r.id); }}
                   >
                     + واریز
-                  </span>
+                  </span>}
                   <div className="text-xs text-muted-foreground">مانده: <b className={r.remaining > 0 ? "text-warning" : "text-success"}>{formatMoney(r.remaining)}</b></div>
                 </div>
               </div>
