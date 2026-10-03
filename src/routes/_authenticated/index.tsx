@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMyRole } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -99,6 +100,14 @@ function Index() {
   );
   const current = rows.find((r) => r.id === selected);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["members"] }); scheduleBackup(); };
+  const { data: me } = useMyRole();
+  const canEdit = me?.role === "admin" || me?.role === "editor";
+  const navigate = useNavigate();
+  const signOut = async () => {
+    await qc.cancelQueries(); qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-background pb-28">
@@ -115,6 +124,10 @@ function Index() {
             <Link to="/report" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
               گزارش
             </Link>
+            {me?.role === "admin" && (
+              <Link to="/users" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">کاربران</Link>
+            )}
+            <button className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold" onClick={signOut}>خروج</button>
           </div>
         </div>
         <p className="mt-1 text-sm opacity-80">{formatMoney(rows.length)} عضو ثبت‌شده</p>
