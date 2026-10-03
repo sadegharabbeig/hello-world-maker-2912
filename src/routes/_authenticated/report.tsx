@@ -9,7 +9,7 @@ import { formatMoney } from "@/lib/accounting";
 import { formatJalali } from "@/lib/jalali";
 import { JalaliDateInput } from "@/components/JalaliDateInput";
 
-export const Route = createFileRoute("/report")({
+export const Route = createFileRoute("/_authenticated/report")({
   head: () => ({
     meta: [
       { title: "گزارش واریزی‌ها | حساب اعضا" },

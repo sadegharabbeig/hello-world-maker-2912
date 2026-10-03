@@ -12,7 +12,7 @@ import { formatJalali } from "@/lib/jalali";
 import { JalaliDateInput } from "@/components/JalaliDateInput";
 import { scheduleBackup, downloadBackup } from "@/lib/backup";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "حساب اعضا | ثبت تعهد و واریزی" },
