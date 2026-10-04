@@ -29,8 +29,35 @@ type Row = {
   amount: number;
   note: string | null;
   paid_at: string;
+  tracking_code: string | null;
+  receipt_url: string | null;
   member: { name: string; code: number; legion_number: string | null } | null;
 };
+
+async function downloadRowsExcel(rows: Row[]) {
+  const XLSX = await import("xlsx");
+  const data = rows.map((r) => ({
+    "تاریخ": formatJalaliNumeric(r.paid_at),
+    "کد عضو": r.member?.code ?? "",
+    "نام": r.member?.name ?? "",
+    "لژیون": r.member?.legion_number ?? "",
+    "مبلغ": r.amount,
+    "کد پیگیری": r.tracking_code ?? "",
+    "فیش": r.receipt_url ? "دارد" : "ندارد",
+    "توضیح": r.note ?? "",
+  }));
+  const wb = XLSX.utils.book_new();
+  wb.Workbook = { Views: [{ RTL: true }] };
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "گزارش");
+  const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
+  const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "gozaresh-variziha.xlsx";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
 
 const EARLY = "پیش از موعد";
 
