@@ -72,7 +72,7 @@ function Report() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("member_payments")
-        .select("id, amount, note, paid_at, member:members(name, code, legion_number)")
+        .select("id, amount, note, paid_at, tracking_code, receipt_url, member:members(name, code, legion_number)")
         .order("paid_at", { ascending: false });
       if (error) throw error;
       return data as unknown as Row[];
