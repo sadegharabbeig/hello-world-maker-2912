@@ -97,9 +97,23 @@ function Report() {
       <header className="rounded-b-3xl bg-primary px-5 pb-6 pt-8 text-primary-foreground">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold">گزارش واریزی‌ها</h1>
-          <Link to="/" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
-            بازگشت
-          </Link>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={filtered.length === 0}
+              onClick={() =>
+                downloadRowsExcel(filtered)
+                  .then(() => toast.success("فایل اکسل دانلود شد"))
+                  .catch(() => toast.error("خطا در ساخت فایل اکسل"))
+              }
+              className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold disabled:opacity-50"
+            >
+              بکاپ اکسل
+            </button>
+            <Link to="/" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
+              بازگشت
+            </Link>
+          </div>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-2 text-center">
           <div className="rounded-xl bg-primary-foreground/10 p-2">
