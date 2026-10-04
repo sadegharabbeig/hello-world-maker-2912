@@ -41,6 +41,7 @@ async function downloadRowsExcel(rows: Row[]) {
     "کد عضو": r.member?.code ?? "",
     "نام": r.member?.name ?? "",
     "لژیون": r.member?.legion_number ?? "",
+    "عنوان": memberTitle(r.member?.pledged ?? 0),
     "مبلغ": r.amount,
     "کد پیگیری": r.tracking_code ?? "",
     "فیش": r.receipt_url ? "دارد" : "ندارد",
@@ -153,8 +154,23 @@ function Report() {
         >
           {earlyOnly ? "✓ فقط واریزی‌های پیش از موعد" : "فقط واریزی‌های پیش از موعد"}
         </Button>
-        {(from || to || legion || earlyOnly) && (
-          <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => { setFrom(""); setTo(""); setLegion(""); setEarlyOnly(false); }}>
+        <div>
+          <Label>عنوان (تعهد)</Label>
+          <div className="mt-1 grid grid-cols-3 gap-2">
+            {TITLE_OPTIONS.map((t) => (
+              <Button
+                key={t}
+                variant={title === t ? "default" : "outline"}
+                className="h-9 px-1 text-xs"
+                onClick={() => setTitle((v) => (v === t ? "" : t))}
+              >
+                {title === t ? `✓ ${t}` : t}
+              </Button>
+            ))}
+          </div>
+        </div>
+        {(from || to || legion || earlyOnly || title) && (
+          <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => { setFrom(""); setTo(""); setLegion(""); setEarlyOnly(false); setTitle(""); }}>
             پاک کردن فیلترها
           </Button>
         )}
