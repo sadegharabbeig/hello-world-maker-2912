@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/accounting";
-import { formatJalali } from "@/lib/jalali";
+import { formatJalali, formatJalaliNumeric } from "@/lib/jalali";
 import { JalaliDateInput } from "@/components/JalaliDateInput";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/report")({
   head: () => ({
@@ -28,8 +29,35 @@ type Row = {
   amount: number;
   note: string | null;
   paid_at: string;
+  tracking_code: string | null;
+  receipt_url: string | null;
   member: { name: string; code: number; legion_number: string | null } | null;
 };
+
+async function downloadRowsExcel(rows: Row[]) {
+  const XLSX = await import("xlsx");
+  const data = rows.map((r) => ({
+    "تاریخ": formatJalaliNumeric(r.paid_at),
+    "کد عضو": r.member?.code ?? "",
+    "نام": r.member?.name ?? "",
+    "لژیون": r.member?.legion_number ?? "",
+    "مبلغ": r.amount,
+    "کد پیگیری": r.tracking_code ?? "",
+    "فیش": r.receipt_url ? "دارد" : "ندارد",
+    "توضیح": r.note ?? "",
+  }));
+  const wb = XLSX.utils.book_new();
+  wb.Workbook = { Views: [{ RTL: true }] };
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "گزارش");
+  const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
+  const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "gozaresh-variziha.xlsx";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
 
 const EARLY = "پیش از موعد";
 
@@ -44,7 +72,7 @@ function Report() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("member_payments")
-        .select("id, amount, note, paid_at, member:members(name, code, legion_number)")
+        .select("id, amount, note, paid_at, tracking_code, receipt_url, member:members(name, code, legion_number)")
         .order("paid_at", { ascending: false });
       if (error) throw error;
       return data as unknown as Row[];
@@ -69,9 +97,23 @@ function Report() {
       <header className="rounded-b-3xl bg-primary px-5 pb-6 pt-8 text-primary-foreground">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold">گزارش واریزی‌ها</h1>
-          <Link to="/" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
-            بازگشت
-          </Link>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={filtered.length === 0}
+              onClick={() =>
+                downloadRowsExcel(filtered)
+                  .then(() => toast.success("فایل اکسل دانلود شد"))
+                  .catch(() => toast.error("خطا در ساخت فایل اکسل"))
+              }
+              className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold disabled:opacity-50"
+            >
+              بکاپ اکسل
+            </button>
+            <Link to="/" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
+              بازگشت
+            </Link>
+          </div>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-2 text-center">
           <div className="rounded-xl bg-primary-foreground/10 p-2">
