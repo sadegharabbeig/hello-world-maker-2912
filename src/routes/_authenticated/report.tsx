@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { formatMoney } from "@/lib/accounting";
+import { formatMoney, memberTitle } from "@/lib/accounting";
 import { formatJalali, formatJalaliNumeric } from "@/lib/jalali";
 import { JalaliDateInput } from "@/components/JalaliDateInput";
 import { toast } from "sonner";
@@ -31,7 +31,7 @@ type Row = {
   paid_at: string;
   tracking_code: string | null;
   receipt_url: string | null;
-  member: { name: string; code: number; legion_number: string | null } | null;
+  member: { name: string; code: number; legion_number: string | null; pledged: number } | null;
 };
 
 async function downloadRowsExcel(rows: Row[]) {
@@ -41,6 +41,7 @@ async function downloadRowsExcel(rows: Row[]) {
     "کد عضو": r.member?.code ?? "",
     "نام": r.member?.name ?? "",
     "لژیون": r.member?.legion_number ?? "",
+    "عنوان": memberTitle(r.member?.pledged ?? 0),
     "مبلغ": r.amount,
     "کد پیگیری": r.tracking_code ?? "",
     "فیش": r.receipt_url ? "دارد" : "ندارد",
@@ -61,18 +62,21 @@ async function downloadRowsExcel(rows: Row[]) {
 
 const EARLY = "پیش از موعد";
 
+const TITLE_OPTIONS = ["سردار", "دنور", "پهلوان"] as const;
+
 function Report() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [legion, setLegion] = useState("");
   const [earlyOnly, setEarlyOnly] = useState(false);
+  const [title, setTitle] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["report"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("member_payments")
-        .select("id, amount, note, paid_at, tracking_code, receipt_url, member:members(name, code, legion_number)")
+        .select("id, amount, note, paid_at, tracking_code, receipt_url, member:members(name, code, legion_number, pledged)")
         .order("paid_at", { ascending: false });
       if (error) throw error;
       return data as unknown as Row[];
@@ -86,9 +90,10 @@ function Report() {
       if (to && r.paid_at > to) return false;
       if (legion.trim() && (r.member?.legion_number ?? "") !== legion.trim()) return false;
       if (earlyOnly && !(r.note ?? "").includes(EARLY)) return false;
+      if (title && memberTitle(r.member?.pledged ?? 0) !== title) return false;
       return true;
     });
-  }, [data, from, to, legion, earlyOnly]);
+  }, [data, from, to, legion, earlyOnly, title]);
 
   const total = filtered.reduce((a, r) => a + r.amount, 0);
 
@@ -149,8 +154,23 @@ function Report() {
         >
           {earlyOnly ? "✓ فقط واریزی‌های پیش از موعد" : "فقط واریزی‌های پیش از موعد"}
         </Button>
-        {(from || to || legion || earlyOnly) && (
-          <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => { setFrom(""); setTo(""); setLegion(""); setEarlyOnly(false); }}>
+        <div>
+          <Label>عنوان (تعهد)</Label>
+          <div className="mt-1 grid grid-cols-3 gap-2">
+            {TITLE_OPTIONS.map((t) => (
+              <Button
+                key={t}
+                variant={title === t ? "default" : "outline"}
+                className="h-9 px-1 text-xs"
+                onClick={() => setTitle((v) => (v === t ? "" : t))}
+              >
+                {title === t ? `✓ ${t}` : t}
+              </Button>
+            ))}
+          </div>
+        </div>
+        {(from || to || legion || earlyOnly || title) && (
+          <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => { setFrom(""); setTo(""); setLegion(""); setEarlyOnly(false); setTitle(""); }}>
             پاک کردن فیلترها
           </Button>
         )}
