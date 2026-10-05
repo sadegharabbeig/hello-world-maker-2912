@@ -307,7 +307,7 @@ function MemberDialog({
       if (r.amount_toman) setAmount(String(r.amount_toman));
       if (r.tracking_code) setTracking(r.tracking_code);
       const m = r.date_jalali?.match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/);
-      if (m) setPayDate(jalaliToIso(+m[1], +m[2], +m[3]));
+      if (m) setPayDate(jalaliToIso(Number(m[1]), Number(m[2]), Number(m[3])));
       setFile(f); setFileKey((k) => k + 1);
       setScanned(true);
       if (!r.amount_toman && !r.tracking_code) toast.error("چیزی از فیش خوانده نشد؛ دستی وارد کنید");
