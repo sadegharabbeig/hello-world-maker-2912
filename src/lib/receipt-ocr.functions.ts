@@ -26,7 +26,7 @@ export const readReceipt = createServerFn({ method: "POST" })
     if (!ok) throw new Error("forbidden");
     const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
       method: "POST",
-      headers: { Authorization: `Bearer ${process.env.LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${process.env['LOVABLE_API_KEY']}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "openai/gpt-6-astra",
         reasoning: { effort: "low" },
@@ -52,7 +52,7 @@ export const readReceipt = createServerFn({ method: "POST" })
     const j = await res.json();
     const txt: string =
       j.output_text ??
-      j.output?.flatMap((o: any) => o.content ?? []).find((c: any) => c.type === "output_text")?.text ??
+      j.output?.flatMap((o: { content?: { type: string; text?: string }[] }) => o.content ?? []).find((c: { type: string; text?: string }) => c.type === "output_text")?.text ??
       "";
     if (!txt) throw new Error("empty");
     return JSON.parse(txt) as ReceiptRead;
