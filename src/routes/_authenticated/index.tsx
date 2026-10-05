@@ -12,6 +12,24 @@ import { formatMoney, memberTitle, todayISO } from "@/lib/accounting";
 import { formatJalali } from "@/lib/jalali";
 import { JalaliDateInput } from "@/components/JalaliDateInput";
 import { scheduleBackup, downloadBackup } from "@/lib/backup";
+import { readReceipt } from "@/lib/receipt-ocr.functions";
+import { jalaliToIso } from "@/lib/jalali";
+
+function shrinkImage(file: File, max = 1600): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      resolve(c.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -275,6 +293,31 @@ function MemberDialog({
   const [editTracking, setEditTracking] = useState("");
   const [editFile, setEditFile] = useState<File | null>(null);
   const [busyDate, setBusyDate] = useState(false);
+  const scanRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanned, setScanned] = useState(false);
+  const scanReceipt = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setScanning(true); setScanned(false);
+    try {
+      const image = await shrinkImage(f);
+      const r = await readReceipt({ data: { image } });
+      if (r.amount_toman) setAmount(String(r.amount_toman));
+      if (r.tracking_code) setTracking(r.tracking_code);
+      const m = r.date_jalali?.match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/);
+      if (m) setPayDate(jalaliToIso(Number(m[1]), Number(m[2]), Number(m[3])));
+      setFile(f); setFileKey((k) => k + 1);
+      setScanned(true);
+      if (!r.amount_toman && !r.tracking_code) toast.error("چیزی از فیش خوانده نشد؛ دستی وارد کنید");
+    } catch (err) {
+      const msg = String((err as Error)?.message);
+      toast.error(msg.includes("credits") ? "اعتبار هوش مصنوعی تمام شده" : msg.includes("rate") ? "کمی بعد دوباره امتحان کنید" : "فیش خوانده نشد؛ دستی وارد کنید");
+    }
+    setScanning(false);
+  };
+
 
   const addPayment = async () => {
     const a = toNum(amount);
@@ -369,6 +412,11 @@ function MemberDialog({
 
         {canEdit && <>
         <div className="space-y-2 rounded-xl border p-3">
+          <input ref={scanRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={scanReceipt} />
+          <Button type="button" variant="secondary" className="w-full" disabled={scanning} onClick={() => scanRef.current?.click()}>
+            {scanning ? "در حال خواندن فیش…" : "📷 خواندن خودکار از عکس فیش"}
+          </Button>
+          {scanned && <p className="rounded-lg bg-secondary p-2 text-xs">اطلاعات از فیش خوانده شد. لطفاً مبلغ، تاریخ و کد پیگیری را بررسی کنید و اگر درست بود «ثبت واریزی» را بزنید.</p>}
           <Label htmlFor="pa">ثبت واریزی جدید (تومان)</Label>
           <MoneyInput id="pa" value={amount} onChange={setAmount} />
           <Input placeholder="کد پیگیری (الزامی)" dir="ltr" value={tracking} onChange={(e) => setTracking(e.target.value)} />
