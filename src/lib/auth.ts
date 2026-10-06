@@ -20,8 +20,9 @@ export function useMyRole() {
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return null;
-      const { data } = await supabase.from("user_roles").select("role, username").eq("user_id", u.user.id).maybeSingle();
-      return data as { role: Role; username: string } | null;
+      const { data } = await supabase.from("user_roles").select("role, username, branch_id, branches(name)").eq("user_id", u.user.id).maybeSingle();
+      if (!data) return null;
+      return { role: data.role as Role, username: data.username, branchId: data.branch_id as string | null, branchName: (data as any).branches?.name as string | undefined };
     },
     staleTime: 60_000,
   });

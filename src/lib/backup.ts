@@ -2,7 +2,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { memberTitle } from "@/lib/accounting";
 import { formatJalaliNumeric } from "@/lib/jalali";
 
-const PATH = "backup.xlsx";
+async function backupPath() {
+  const { data } = await supabase.rpc("my_branch", { _user_id: (await supabase.auth.getUser()).data.user?.id ?? "" });
+  if (!data) throw new Error("no branch");
+  return `${data}/backup.xlsx`;
+}
 const BUCKET = "backups";
 
 async function buildWorkbook(): Promise<Blob> {
@@ -49,14 +53,14 @@ export function scheduleBackup() {
 
 export async function saveBackup() {
   const blob = await buildWorkbook();
-  const { error } = await supabase.storage.from(BUCKET).upload(PATH, blob, { upsert: true, contentType: blob.type });
+  const { error } = await supabase.storage.from(BUCKET).upload(await backupPath(), blob, { upsert: true, contentType: blob.type });
   if (error) throw error;
 }
 
 /** Download the latest backup to the device (always same file name). */
 export async function downloadBackup() {
   const blob = await buildWorkbook();
-  void supabase.storage.from(BUCKET).upload(PATH, blob, { upsert: true, contentType: blob.type });
+  void backupPath().then((path) => supabase.storage.from(BUCKET).upload(path, blob, { upsert: true, contentType: blob.type })).catch(() => {});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMyRole } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,10 @@ type Payment = { id: string; member_id: string; amount: number; note: string | n
 
 async function uploadReceipt(file: File) {
   const ext = file.name.split(".").pop() || "jpg";
-  const path = `${crypto.randomUUID()}.${ext}`;
+  const { data: u } = await supabase.auth.getUser();
+  const { data: branch } = await supabase.rpc("my_branch", { _user_id: u.user?.id ?? "" });
+  if (!branch) throw new Error("no branch");
+  const path = `${branch}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from("receipts").upload(path, file, { contentType: file.type });
   if (error) throw error;
   return path;
@@ -121,6 +124,7 @@ function Index() {
   const { data: me } = useMyRole();
   const canEdit = me?.role === "admin" || me?.role === "editor";
   const navigate = useNavigate();
+  useEffect(() => { if (me?.role === "admin") navigate({ to: "/users", replace: true }); }, [me?.role]);
   const signOut = async () => {
     await qc.cancelQueries(); qc.clear();
     await supabase.auth.signOut();
@@ -142,13 +146,10 @@ function Index() {
             <Link to="/report" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
               گزارش
             </Link>
-            {me?.role === "admin" && (
-              <Link to="/users" className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">کاربران</Link>
-            )}
             <button className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold" onClick={signOut}>خروج</button>
           </div>
         </div>
-        <p className="mt-1 text-sm opacity-80">{formatMoney(rows.length)} عضو ثبت‌شده</p>
+        <p className="mt-1 text-sm opacity-80">{me?.branchName ? `${me.branchName} · ` : ""}{formatMoney(rows.length)} عضو ثبت‌شده</p>
         <div className="mt-5 grid grid-cols-3 gap-2 text-center">
           {[
             ["کل تعهد", totals.pledged],
