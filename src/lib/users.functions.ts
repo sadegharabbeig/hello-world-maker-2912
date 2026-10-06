@@ -119,7 +119,8 @@ export const updateAppUser = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const db = await admin();
     if (data.role) {
-      if (data.userId === context.userId && data.role !== "admin") throw new Error("نمی‌توانید نقش مدیریت خودتان را بردارید");
+      const { data: cur } = await db.from("user_roles").select("role").eq("user_id", data.userId).maybeSingle();
+      if (cur?.role === "admin" || data.role === "admin") throw new Error("نقش مدیر کل قابل تغییر نیست");
       await db.from("user_roles").update({ role: data.role }).eq("user_id", data.userId);
     }
     if (data.password) {
