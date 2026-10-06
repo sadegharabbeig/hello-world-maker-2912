@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      branches: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       member_payments: {
         Row: {
           amount: number
@@ -57,6 +75,7 @@ export type Database = {
       }
       members: {
         Row: {
+          branch_id: string
           code: number
           created_at: string
           id: string
@@ -66,6 +85,7 @@ export type Database = {
           pledged: number
         }
         Insert: {
+          branch_id?: string
           code?: number
           created_at?: string
           id?: string
@@ -75,6 +95,7 @@ export type Database = {
           pledged?: number
         }
         Update: {
+          branch_id?: string
           code?: number
           created_at?: string
           id?: string
@@ -83,11 +104,20 @@ export type Database = {
           phone?: string | null
           pledged?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "members_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {
           amount: number
+          branch_id: string
           category: string
           created_at: string
           id: string
@@ -97,6 +127,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          branch_id?: string
           category: string
           created_at?: string
           id?: string
@@ -106,6 +137,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          branch_id?: string
           category?: string
           created_at?: string
           id?: string
@@ -113,10 +145,19 @@ export type Database = {
           occurred_at?: string
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
+          branch_id: string | null
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
@@ -124,6 +165,7 @@ export type Database = {
           username: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
@@ -131,13 +173,22 @@ export type Database = {
           username: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
           username?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -153,6 +204,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      my_branch: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "editor" | "viewer"

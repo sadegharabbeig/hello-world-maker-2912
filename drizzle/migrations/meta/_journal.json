@@ -43,6 +43,13 @@
       "when": 1791054342224,
       "tag": "0005_roles_and_locked_access",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791311384570,
+      "tag": "0006_branches",
+      "breakpoints": true
     }
   ]
 }
