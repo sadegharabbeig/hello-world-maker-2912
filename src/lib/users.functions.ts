@@ -36,26 +36,78 @@ export const setupFirstAdmin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const branchName = z.string().trim().min(1, "نام شعبه را وارد کنید").max(60);
+
+export const listBranches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { data, error } = await context.supabase.from("branches").select("id, name, created_at").order("created_at");
+    if (error) throw new Error(error.message);
+    const db = await admin();
+    const { data: ms } = await db.from("members").select("branch_id");
+    const counts: Record<string, number> = {};
+    for (const m of ms ?? []) counts[m.branch_id] = (counts[m.branch_id] ?? 0) + 1;
+    return data.map((b) => ({ ...b, members: counts[b.id] ?? 0 }));
+  });
+
+export const createBranch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ name: branchName }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("branches").insert({ name: data.name });
+    if (error) throw new Error(error.code === "23505" ? "شعبه‌ای با این نام وجود دارد" : "ساخت شعبه انجام نشد");
+    return { ok: true };
+  });
+
+export const renameBranch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid(), name: branchName }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("branches").update({ name: data.name }).eq("id", data.id);
+    if (error) throw new Error(error.code === "23505" ? "شعبه‌ای با این نام وجود دارد" : "تغییر نام انجام نشد");
+    return { ok: true };
+  });
+
+export const deleteBranch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const db = await admin();
+    const { count } = await db.from("members").select("id", { count: "exact", head: true }).eq("branch_id", data.id);
+    if ((count ?? 0) > 0) throw new Error("این شعبه عضو دارد؛ اول اعضای آن باید حذف شوند");
+    const { data: us } = await db.from("user_roles").select("user_id").eq("branch_id", data.id);
+    for (const u of us ?? []) await db.auth.admin.deleteUser(u.user_id);
+    await db.from("user_roles").delete().eq("branch_id", data.id);
+    await db.from("branches").delete().eq("id", data.id);
+    return { ok: true };
+  });
+
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { data, error } = await context.supabase.from("user_roles").select("user_id, username, role, created_at").order("created_at");
+    const { data, error } = await context.supabase.from("user_roles").select("user_id, username, role, branch_id, created_at").order("created_at");
     if (error) throw new Error(error.message);
     return data;
   });
 
 export const createAppUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ username: userSchema, password: passSchema, role: roleSchema }).parse(d))
+  .inputValidator((d) => z.object({ username: userSchema, password: passSchema, role: roleSchema, branchId: z.string().uuid().nullable() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    if (data.role !== "admin" && !data.branchId) throw new Error("شعبه را انتخاب کنید");
+    const branch_id = data.role === "admin" ? null : data.branchId;
     const db = await admin();
     const { data: u, error } = await db.auth.admin.createUser({
       email: usernameToEmail(data.username), password: data.password, email_confirm: true,
     });
     if (error || !u.user) throw new Error(error?.message?.includes("already") ? "این نام کاربری قبلاً ثبت شده" : "ساخت کاربر انجام نشد");
-    const { error: e2 } = await db.from("user_roles").insert({ user_id: u.user.id, role: data.role, username: normalizeUsername(data.username) });
+    const { error: e2 } = await db.from("user_roles").insert({ user_id: u.user.id, role: data.role, username: normalizeUsername(data.username), branch_id });
     if (e2) { await db.auth.admin.deleteUser(u.user.id); throw new Error("این نام کاربری قبلاً ثبت شده"); }
     return { ok: true };
   });
@@ -67,7 +119,8 @@ export const updateAppUser = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const db = await admin();
     if (data.role) {
-      if (data.userId === context.userId && data.role !== "admin") throw new Error("نمی‌توانید نقش مدیریت خودتان را بردارید");
+      const { data: cur } = await db.from("user_roles").select("role").eq("user_id", data.userId).maybeSingle();
+      if (cur?.role === "admin" || data.role === "admin") throw new Error("نقش مدیر کل قابل تغییر نیست");
       await db.from("user_roles").update({ role: data.role }).eq("user_id", data.userId);
     }
     if (data.password) {
